@@ -49,6 +49,11 @@ export interface User {
   preferredWorkMode: string | null
   salaryMin: number | null
   salaryMax: number | null
+  emailNotifications: boolean
+  browserNotifications: boolean
+  weeklySummary: boolean
+  defaultFollowUpDays: number
+  interviewReminderDays: number
   createdAt: string
   updatedAt: string
 }
@@ -88,6 +93,16 @@ export const authApi = {
     api<{ message: string }>('/auth/change-password', {
       method: 'POST',
       body: { currentPassword, newPassword },
+      token,
+    }),
+
+  exportData: (token: string) =>
+    api<{ data: unknown }>('/auth/export', { token }),
+
+  deleteAccount: (token: string, password: string) =>
+    api<{ message: string }>('/auth/account', {
+      method: 'DELETE',
+      body: { password },
       token,
     }),
 }
