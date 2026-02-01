@@ -125,6 +125,11 @@ auth.get('/me', authMiddleware, async (c) => {
         preferredWorkMode: true,
         salaryMin: true,
         salaryMax: true,
+        emailNotifications: true,
+        browserNotifications: true,
+        weeklySummary: true,
+        defaultFollowUpDays: true,
+        interviewReminderDays: true,
         createdAt: true,
         updatedAt: true,
       },
@@ -167,6 +172,11 @@ auth.patch('/me', authMiddleware, async (c) => {
         preferredWorkMode: true,
         salaryMin: true,
         salaryMax: true,
+        emailNotifications: true,
+        browserNotifications: true,
+        weeklySummary: true,
+        defaultFollowUpDays: true,
+        interviewReminderDays: true,
         createdAt: true,
         updatedAt: true,
       },
@@ -220,6 +230,115 @@ auth.post('/change-password', authMiddleware, async (c) => {
     return c.json({ message: 'Password changed successfully' })
   } catch (error) {
     console.error('Change password error:', error)
+    return c.json({ error: 'Internal server error' }, 500)
+  }
+})
+
+// Export user data (protected)
+auth.get('/export', authMiddleware, async (c) => {
+  try {
+    const { userId } = c.get('user')
+
+    // Get user with all related data
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        email: true,
+        firstName: true,
+        lastName: true,
+        phone: true,
+        location: true,
+        linkedIn: true,
+        desiredTitle: true,
+        preferredWorkMode: true,
+        salaryMin: true,
+        salaryMax: true,
+        emailNotifications: true,
+        browserNotifications: true,
+        weeklySummary: true,
+        defaultFollowUpDays: true,
+        interviewReminderDays: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    })
+
+    const companies = await prisma.company.findMany({
+      where: { userId },
+      include: {
+        notes: true,
+      },
+    })
+
+    const applications = await prisma.jobApplication.findMany({
+      where: { userId },
+      include: {
+        company: { select: { name: true } },
+        pipelineEvents: true,
+        interviews: { include: { notes: true } },
+        notes: true,
+        reminders: true,
+      },
+    })
+
+    const reminders = await prisma.reminder.findMany({
+      where: { userId },
+    })
+
+    const resumes = await prisma.resumeVersion.findMany({
+      where: { userId },
+    })
+
+    const exportData = {
+      exportedAt: new Date().toISOString(),
+      user,
+      companies,
+      applications,
+      reminders,
+      resumes,
+    }
+
+    return c.json({ data: exportData })
+  } catch (error) {
+    console.error('Export data error:', error)
+    return c.json({ error: 'Internal server error' }, 500)
+  }
+})
+
+// Delete account (protected)
+auth.delete('/account', authMiddleware, async (c) => {
+  try {
+    const { userId } = c.get('user')
+    const { password } = await c.req.json()
+
+    if (!password) {
+      return c.json({ error: 'Password is required to delete account' }, 400)
+    }
+
+    // Verify password before deletion
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+    })
+
+    if (!user) {
+      return c.json({ error: 'User not found' }, 404)
+    }
+
+    const isValidPassword = await verifyPassword(password, user.password)
+
+    if (!isValidPassword) {
+      return c.json({ error: 'Password is incorrect' }, 401)
+    }
+
+    // Delete user (cascade will delete all related data)
+    await prisma.user.delete({
+      where: { id: userId },
+    })
+
+    return c.json({ message: 'Account deleted successfully' })
+  } catch (error) {
+    console.error('Delete account error:', error)
     return c.json({ error: 'Internal server error' }, 500)
   }
 })

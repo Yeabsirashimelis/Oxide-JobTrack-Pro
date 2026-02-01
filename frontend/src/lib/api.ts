@@ -49,6 +49,11 @@ export interface User {
   preferredWorkMode: string | null
   salaryMin: number | null
   salaryMax: number | null
+  emailNotifications: boolean
+  browserNotifications: boolean
+  weeklySummary: boolean
+  defaultFollowUpDays: number
+  interviewReminderDays: number
   createdAt: string
   updatedAt: string
 }
@@ -88,6 +93,16 @@ export const authApi = {
     api<{ message: string }>('/auth/change-password', {
       method: 'POST',
       body: { currentPassword, newPassword },
+      token,
+    }),
+
+  exportData: (token: string) =>
+    api<{ data: unknown }>('/auth/export', { token }),
+
+  deleteAccount: (token: string, password: string) =>
+    api<{ message: string }>('/auth/account', {
+      method: 'DELETE',
+      body: { password },
       token,
     }),
 }
@@ -404,6 +419,27 @@ export interface UpcomingReminder {
   } | null
 }
 
+export interface DailyActivity {
+  date: string
+  count: number
+  applications: number
+  interviews: number
+  notes: number
+  stageChanges: number
+  reminders: number
+}
+
+export interface ActivityHeatmapData {
+  activity: DailyActivity[]
+  summary: {
+    totalActivity: number
+    maxDailyActivity: number
+    daysWithActivity: number
+    startDate: string
+    endDate: string
+  }
+}
+
 export const dashboardApi = {
   getStats: (token: string) =>
     api<{ stats: DashboardStats }>('/dashboard/stats', { token }),
@@ -413,6 +449,9 @@ export const dashboardApi = {
 
   getUpcoming: (token: string, limit = 5) =>
     api<{ reminders: UpcomingReminder[]; interviews: UpcomingInterview[] }>(`/dashboard/upcoming?limit=${limit}`, { token }),
+
+  getActivityHeatmap: (token: string, days = 365) =>
+    api<ActivityHeatmapData>(`/dashboard/activity-heatmap?days=${days}`, { token }),
 }
 
 // Analytics API

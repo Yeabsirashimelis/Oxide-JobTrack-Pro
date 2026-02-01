@@ -1,5 +1,5 @@
 import { AppLayout } from "@/components/layout";
-import { StatsCards, UpcomingReminders, RecentApplications } from "@/components/dashboard";
+import { StatsCards, UpcomingReminders, RecentApplications, ActivityHeatmap } from "@/components/dashboard";
 
 export default function Home() {
   return (
@@ -15,6 +15,9 @@ export default function Home() {
 
         {/* Stats */}
         <StatsCards />
+
+        {/* Activity Heatmap */}
+        <ActivityHeatmap />
 
         {/* Two column layout */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

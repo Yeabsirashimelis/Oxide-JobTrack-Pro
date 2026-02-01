@@ -23,6 +23,15 @@ model User {
   salaryMin       Int?
   salaryMax       Int?
 
+  // Notification settings
+  emailNotifications    Boolean @default(true)
+  browserNotifications  Boolean @default(false)
+  weeklySummary         Boolean @default(true)
+
+  // Reminder settings (in days)
+  defaultFollowUpDays   Int @default(7)
+  interviewReminderDays Int @default(1)
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
