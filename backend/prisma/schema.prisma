@@ -1,0 +1,246 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ==================== USER ====================
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  firstName String?
+  lastName  String?
+  phone     String?
+  location  String?
+  linkedIn  String?
+
+  // Job preferences
+  desiredTitle    String?
+  preferredWorkMode WorkMode?
+  salaryMin       Int?
+  salaryMax       Int?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  companies      Company[]
+  applications   JobApplication[]
+  resumes        ResumeVersion[]
+  reminders      Reminder[]
+
+  @@map("users")
+}
+
+// ==================== COMPANY ====================
+model Company {
+  id          String   @id @default(cuid())
+  name        String
+  industry    String?
+  size        String?
+  location    String?
+  website     String?
+  description String?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  userId       String
+  user         User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  applications JobApplication[]
+  notes        Note[]
+
+  @@map("companies")
+}
+
+// ==================== JOB APPLICATION ====================
+model JobApplication {
+  id          String   @id @default(cuid())
+  title       String
+  jobType     JobType  @default(FULL_TIME)
+  workMode    WorkMode @default(ONSITE)
+  location    String?
+  salaryMin   Int?
+  salaryMax   Int?
+  source      String?  // LinkedIn, Referral, Company Website, etc.
+  jobUrl      String?
+  description String?
+
+  // Pipeline
+  stage       PipelineStage @default(SAVED)
+  appliedAt   DateTime?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  userId          String
+  user            User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  companyId       String
+  company         Company         @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  resumeId        String?
+  resume          ResumeVersion?  @relation(fields: [resumeId], references: [id], onDelete: SetNull)
+
+  pipelineEvents  PipelineEvent[]
+  interviews      Interview[]
+  notes           Note[]
+  reminders       Reminder[]
+
+  @@map("job_applications")
+}
+
+// ==================== PIPELINE EVENT ====================
+model PipelineEvent {
+  id        String        @id @default(cuid())
+  stage     PipelineStage
+  note      String?
+
+  createdAt DateTime      @default(now())
+
+  // Relations
+  applicationId String
+  application   JobApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  @@map("pipeline_events")
+}
+
+// ==================== INTERVIEW ====================
+model Interview {
+  id            String          @id @default(cuid())
+  roundName     String          // HR, Technical, Final, etc.
+  roundNumber   Int             @default(1)
+  interviewerName String?
+
+  scheduledAt   DateTime?
+  mode          InterviewMode   @default(ONLINE)
+  location      String?         // For onsite or specific meeting link
+
+  outcome       InterviewOutcome @default(PENDING)
+  feedback      String?
+
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  // Relations
+  applicationId String
+  application   JobApplication  @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  notes         Note[]
+
+  @@map("interviews")
+}
+
+// ==================== NOTE ====================
+model Note {
+  id        String   @id @default(cuid())
+  content   String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Polymorphic relations - note can belong to one of these
+  companyId     String?
+  company       Company?        @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  applicationId String?
+  application   JobApplication? @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  interviewId   String?
+  interview     Interview?      @relation(fields: [interviewId], references: [id], onDelete: Cascade)
+
+  @@map("notes")
+}
+
+// ==================== REMINDER ====================
+model Reminder {
+  id        String         @id @default(cuid())
+  title     String
+  type      ReminderType   @default(FOLLOW_UP)
+  dueAt     DateTime
+  status    ReminderStatus @default(PENDING)
+
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+
+  // Relations
+  userId        String
+  user          User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  applicationId String?
+  application   JobApplication? @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  @@map("reminders")
+}
+
+// ==================== RESUME VERSION ====================
+model ResumeVersion {
+  id        String   @id @default(cuid())
+  name      String   // e.g., "resume_v2_backend.pdf"
+  fileName  String?
+  fileUrl   String?
+  isDefault Boolean  @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  userId       String
+  user         User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  applications JobApplication[]
+
+  @@map("resume_versions")
+}
+
+// ==================== ENUMS ====================
+enum JobType {
+  FULL_TIME
+  PART_TIME
+  CONTRACT
+  INTERNSHIP
+  FREELANCE
+}
+
+enum WorkMode {
+  REMOTE
+  HYBRID
+  ONSITE
+}
+
+enum PipelineStage {
+  SAVED
+  APPLIED
+  SCREENING
+  INTERVIEW
+  OFFER
+  ACCEPTED
+  REJECTED
+  WITHDRAWN
+}
+
+enum InterviewMode {
+  ONLINE
+  ONSITE
+  PHONE
+}
+
+enum InterviewOutcome {
+  PENDING
+  PASSED
+  FAILED
+  CANCELLED
+}
+
+enum ReminderType {
+  FOLLOW_UP
+  INTERVIEW_PREP
+  INTERVIEW
+  DEADLINE
+  CUSTOM
+}
+
+enum ReminderStatus {
+  PENDING
+  COMPLETED
+  OVERDUE
+}
