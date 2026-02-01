@@ -11,6 +11,7 @@ import notes from './routes/notes.js'
 import reminders from './routes/reminders.js'
 import resumes from './routes/resumes.js'
 import dashboard from './routes/dashboard.js'
+import analytics from './routes/analytics.js'
 
 const app = new Hono()
 
@@ -43,6 +44,7 @@ api.route('/notes', notes)
 api.route('/reminders', reminders)
 api.route('/resumes', resumes)
 api.route('/dashboard', dashboard)
+api.route('/analytics', analytics)
 
 app.route('/api', api)
 

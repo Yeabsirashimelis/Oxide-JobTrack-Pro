@@ -415,6 +415,54 @@ export const dashboardApi = {
     api<{ reminders: UpcomingReminder[]; interviews: UpcomingInterview[] }>(`/dashboard/upcoming?limit=${limit}`, { token }),
 }
 
+// Analytics API
+export interface AnalyticsMetrics {
+  totalApplications: number
+  interviewRate: number
+  interviewCount: number
+  offerRate: number
+  offerCount: number
+  avgResponseDays: number | null
+}
+
+export interface FunnelStage {
+  name: string
+  count: number
+  percentage: number
+}
+
+export interface WeeklyActivity {
+  week: string
+  applications: number
+  interviews: number
+}
+
+export interface StageBreakdownItem {
+  stage: string
+  count: number
+  percentage: number
+}
+
+export interface SourceItem {
+  source: string
+  count: number
+  interviews: number
+  percentage: number
+}
+
+export interface AnalyticsData {
+  metrics: AnalyticsMetrics
+  funnel: FunnelStage[]
+  weeklyActivity: WeeklyActivity[]
+  stageBreakdown: StageBreakdownItem[]
+  sources: SourceItem[]
+}
+
+export const analyticsApi = {
+  get: (token: string, days = 30) =>
+    api<{ analytics: AnalyticsData }>(`/analytics?days=${days}`, { token }),
+}
+
 // Notes API
 export interface Note {
   id: string
