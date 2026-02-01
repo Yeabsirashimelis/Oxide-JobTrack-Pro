@@ -223,9 +223,17 @@ dashboard.get('/activity-heatmap', async (c) => {
     // Aggregate activity by date
     const activityMap: Record<string, { count: number; applications: number; interviews: number; notes: number; stageChanges: number; reminders: number }> = {}
 
+    // Helper to format date as YYYY-MM-DD (local timezone)
+    const formatDate = (date: Date): string => {
+      const year = date.getFullYear()
+      const month = String(date.getMonth() + 1).padStart(2, '0')
+      const day = String(date.getDate()).padStart(2, '0')
+      return `${year}-${month}-${day}`
+    }
+
     // Helper to add activity to a date
     const addActivity = (date: Date, type: 'applications' | 'interviews' | 'notes' | 'stageChanges' | 'reminders') => {
-      const dateStr = date.toISOString().split('T')[0]
+      const dateStr = formatDate(date)
       if (!activityMap[dateStr]) {
         activityMap[dateStr] = { count: 0, applications: 0, interviews: 0, notes: 0, stageChanges: 0, reminders: 0 }
       }
@@ -255,8 +263,8 @@ dashboard.get('/activity-heatmap', async (c) => {
         totalActivity,
         maxDailyActivity,
         daysWithActivity: activity.length,
-        startDate: startDate.toISOString().split('T')[0],
-        endDate: now.toISOString().split('T')[0],
+        startDate: formatDate(startDate),
+        endDate: formatDate(now),
       },
     })
   } catch (error) {

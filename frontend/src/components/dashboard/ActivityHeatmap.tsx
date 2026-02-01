@@ -5,6 +5,14 @@ import { useQuery } from '@tanstack/react-query'
 import { useAuth } from '@/context/AuthContext'
 import { dashboardApi, DailyActivity } from '@/lib/api'
 
+// Helper to format date as YYYY-MM-DD
+const formatDate = (date: Date): string => {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
 export default function ActivityHeatmap() {
   const { token } = useAuth()
 
@@ -44,7 +52,7 @@ export default function ActivityHeatmap() {
 
       if (date > today) break
 
-      const dateStr = date.toISOString().split('T')[0]
+      const dateStr = formatDate(date)
       currentWeek.push({ date, dateStr })
 
       if (currentWeek.length === 7) {
