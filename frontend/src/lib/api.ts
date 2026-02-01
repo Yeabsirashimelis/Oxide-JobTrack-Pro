@@ -363,6 +363,52 @@ export const remindersApi = {
     }),
 }
 
+// Dashboard API
+export interface DashboardStats {
+  totalApplications: number
+  applicationsThisWeek: number
+  inProgress: number
+  totalInterviews: number
+  upcomingInterviews: number
+  offers: number
+  successRate: string
+}
+
+export interface UpcomingInterview {
+  id: string
+  roundName: string
+  scheduledAt: string
+  mode: string
+  application: {
+    id: string
+    title: string
+    company: { name: string }
+  }
+}
+
+export interface UpcomingReminder {
+  id: string
+  title: string
+  type: string
+  dueAt: string
+  application: {
+    id: string
+    title: string
+    company: { name: string }
+  } | null
+}
+
+export const dashboardApi = {
+  getStats: (token: string) =>
+    api<{ stats: DashboardStats }>('/dashboard/stats', { token }),
+
+  getRecentApplications: (token: string, limit = 5) =>
+    api<{ applications: Application[] }>(`/dashboard/recent-applications?limit=${limit}`, { token }),
+
+  getUpcoming: (token: string, limit = 5) =>
+    api<{ reminders: UpcomingReminder[]; interviews: UpcomingInterview[] }>(`/dashboard/upcoming?limit=${limit}`, { token }),
+}
+
 // Notes API
 export interface Note {
   id: string

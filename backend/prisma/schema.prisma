@@ -241,5 +241,6 @@ enum ReminderType {
 enum ReminderStatus {
   PENDING
   COMPLETED
+  DISMISSED
   OVERDUE
 }
