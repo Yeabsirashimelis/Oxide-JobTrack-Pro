@@ -1,21 +1,29 @@
-interface WeekData {
-  week: string;
-  applications: number;
-  interviews: number;
+import { WeeklyActivity } from '@/lib/api'
+
+interface ActivityChartProps {
+  data: WeeklyActivity[]
 }
 
-const weeklyData: WeekData[] = [
-  { week: "Week 1", applications: 5, interviews: 1 },
-  { week: "Week 2", applications: 8, interviews: 2 },
-  { week: "Week 3", applications: 6, interviews: 3 },
-  { week: "Week 4", applications: 3, interviews: 2 },
-  { week: "Week 5", applications: 7, interviews: 4 },
-  { week: "Week 6", applications: 4, interviews: 2 },
-];
+export default function ActivityChart({ data }: ActivityChartProps) {
+  if (data.length === 0) {
+    return (
+      <div className="bg-surface border border-border rounded-lg">
+        <div className="px-5 py-4 border-b border-border">
+          <h2 className="font-semibold text-foreground">Weekly Activity</h2>
+          <p className="text-sm text-text-muted mt-1">Applications and interviews over time</p>
+        </div>
+        <div className="p-6 flex items-center justify-center h-64">
+          <p className="text-text-muted">No activity data available</p>
+        </div>
+      </div>
+    )
+  }
 
-const maxApplications = Math.max(...weeklyData.map((d) => d.applications));
+  const maxValue = Math.max(...data.map((d) => Math.max(d.applications, d.interviews)), 1)
+  const totalApplications = data.reduce((sum, d) => sum + d.applications, 0)
+  const totalInterviews = data.reduce((sum, d) => sum + d.interviews, 0)
+  const avgPerWeek = data.length > 0 ? Math.round(totalApplications / data.length) : 0
 
-export default function ActivityChart() {
   return (
     <div className="bg-surface border border-border rounded-lg">
       <div className="px-5 py-4 border-b border-border">
@@ -37,23 +45,23 @@ export default function ActivityChart() {
 
         {/* Chart */}
         <div className="flex items-end gap-4 h-48">
-          {weeklyData.map((data) => (
-            <div key={data.week} className="flex-1 flex flex-col items-center gap-2">
+          {data.map((item) => (
+            <div key={item.week} className="flex-1 flex flex-col items-center gap-2">
               <div className="w-full flex items-end justify-center gap-1 h-40">
                 {/* Applications bar */}
                 <div
                   className="w-5 bg-primary rounded-t transition-all duration-300"
-                  style={{ height: `${(data.applications / maxApplications) * 100}%` }}
-                  title={`${data.applications} applications`}
+                  style={{ height: `${(item.applications / maxValue) * 100}%`, minHeight: item.applications > 0 ? '4px' : '0' }}
+                  title={`${item.applications} applications`}
                 ></div>
                 {/* Interviews bar */}
                 <div
                   className="w-5 bg-secondary rounded-t transition-all duration-300"
-                  style={{ height: `${(data.interviews / maxApplications) * 100}%` }}
-                  title={`${data.interviews} interviews`}
+                  style={{ height: `${(item.interviews / maxValue) * 100}%`, minHeight: item.interviews > 0 ? '4px' : '0' }}
+                  title={`${item.interviews} interviews`}
                 ></div>
               </div>
-              <span className="text-xs text-text-muted">{data.week}</span>
+              <span className="text-xs text-text-muted">{item.week}</span>
             </div>
           ))}
         </div>
@@ -62,24 +70,18 @@ export default function ActivityChart() {
         <div className="flex items-center justify-between mt-6 pt-4 border-t border-border">
           <div>
             <p className="text-sm text-text-muted">Total Applications</p>
-            <p className="text-xl font-bold text-foreground">
-              {weeklyData.reduce((sum, d) => sum + d.applications, 0)}
-            </p>
+            <p className="text-xl font-bold text-foreground">{totalApplications}</p>
           </div>
           <div>
             <p className="text-sm text-text-muted">Total Interviews</p>
-            <p className="text-xl font-bold text-foreground">
-              {weeklyData.reduce((sum, d) => sum + d.interviews, 0)}
-            </p>
+            <p className="text-xl font-bold text-foreground">{totalInterviews}</p>
           </div>
           <div>
             <p className="text-sm text-text-muted">Avg per Week</p>
-            <p className="text-xl font-bold text-foreground">
-              {Math.round(weeklyData.reduce((sum, d) => sum + d.applications, 0) / weeklyData.length)}
-            </p>
+            <p className="text-xl font-bold text-foreground">{avgPerWeek}</p>
           </div>
         </div>
       </div>
     </div>
-  );
+  )
 }
