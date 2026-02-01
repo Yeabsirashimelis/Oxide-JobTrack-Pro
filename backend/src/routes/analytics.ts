@@ -148,12 +148,15 @@ analytics.get('/', async (c) => {
     // For simplicity, we'll skip this complex calculation for now
     const avgResponseDays = null
 
+    // Count actual interview records (scheduled interviews)
+    const totalInterviews = interviews.length
+
     return c.json({
       analytics: {
         metrics: {
           totalApplications: totalApps,
           interviewRate: Math.round(interviewRate * 10) / 10,
-          interviewCount: interviewAndBeyond,
+          interviewCount: totalInterviews,
           offerRate: Math.round(offerRate * 10) / 10,
           offerCount: offerAndBeyond,
           avgResponseDays,
