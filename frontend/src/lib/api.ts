@@ -150,6 +150,46 @@ export const companiesApi = {
 }
 
 // Applications API
+export type PipelineStage = 'SAVED' | 'APPLIED' | 'SCREENING' | 'INTERVIEW' | 'OFFER' | 'ACCEPTED' | 'REJECTED' | 'WITHDRAWN'
+
+export interface PipelineEvent {
+  id: string
+  stage: PipelineStage
+  note: string | null
+  createdAt: string
+  applicationId: string
+}
+
+export interface Interview {
+  id: string
+  roundName: string
+  roundNumber: number
+  interviewerName: string | null
+  scheduledAt: string | null
+  mode: 'ONLINE' | 'PHONE' | 'ONSITE'
+  location: string | null
+  outcome: 'PENDING' | 'PASSED' | 'FAILED'
+  feedback: string | null
+  applicationId: string
+  createdAt: string
+  updatedAt: string
+  application?: Application
+  notes?: Note[]
+}
+
+export interface Reminder {
+  id: string
+  title: string
+  type: 'FOLLOW_UP' | 'INTERVIEW_PREP' | 'DEADLINE' | 'GENERAL'
+  dueAt: string
+  status: 'PENDING' | 'COMPLETED' | 'DISMISSED'
+  userId: string
+  applicationId: string | null
+  createdAt: string
+  updatedAt: string
+  application?: Application
+}
+
 export interface Application {
   id: string
   title: string
@@ -161,7 +201,7 @@ export interface Application {
   source: string | null
   jobUrl: string | null
   description: string | null
-  stage: string
+  stage: PipelineStage
   appliedAt: string | null
   userId: string
   companyId: string
@@ -169,11 +209,158 @@ export interface Application {
   createdAt: string
   updatedAt: string
   company?: Company
+  pipelineEvents?: PipelineEvent[]
+  interviews?: Interview[]
+  notes?: Note[]
+  reminders?: Reminder[]
   _count?: {
     interviews: number
     notes: number
     reminders: number
   }
+}
+
+export interface CreateApplicationData {
+  title: string
+  companyId: string
+  jobType?: string
+  workMode?: string
+  location?: string
+  salaryMin?: number
+  salaryMax?: number
+  source?: string
+  jobUrl?: string
+  description?: string
+  stage?: PipelineStage
+  resumeId?: string
+}
+
+export const applicationsApi = {
+  getAll: (token: string, params?: { stage?: string; companyId?: string }) => {
+    const searchParams = new URLSearchParams()
+    if (params?.stage) searchParams.set('stage', params.stage)
+    if (params?.companyId) searchParams.set('companyId', params.companyId)
+    const query = searchParams.toString()
+    return api<{ applications: Application[] }>(`/applications${query ? `?${query}` : ''}`, { token })
+  },
+
+  getById: (token: string, id: string) =>
+    api<{ application: Application }>(`/applications/${id}`, { token }),
+
+  create: (token: string, data: CreateApplicationData) =>
+    api<{ message: string; application: Application }>('/applications', {
+      method: 'POST',
+      body: data,
+      token,
+    }),
+
+  update: (token: string, id: string, data: Partial<CreateApplicationData> & { stageNote?: string }) =>
+    api<{ message: string; application: Application }>(`/applications/${id}`, {
+      method: 'PATCH',
+      body: data,
+      token,
+    }),
+
+  delete: (token: string, id: string) =>
+    api<{ message: string }>(`/applications/${id}`, {
+      method: 'DELETE',
+      token,
+    }),
+}
+
+// Interviews API
+export interface CreateInterviewData {
+  applicationId: string
+  roundName: string
+  roundNumber?: number
+  interviewerName?: string
+  scheduledAt?: string
+  mode?: 'ONLINE' | 'PHONE' | 'ONSITE'
+  location?: string
+}
+
+export const interviewsApi = {
+  getAll: (token: string, params?: { applicationId?: string; upcoming?: boolean }) => {
+    const searchParams = new URLSearchParams()
+    if (params?.applicationId) searchParams.set('applicationId', params.applicationId)
+    if (params?.upcoming) searchParams.set('upcoming', 'true')
+    const query = searchParams.toString()
+    return api<{ interviews: Interview[] }>(`/interviews${query ? `?${query}` : ''}`, { token })
+  },
+
+  getById: (token: string, id: string) =>
+    api<{ interview: Interview }>(`/interviews/${id}`, { token }),
+
+  create: (token: string, data: CreateInterviewData) =>
+    api<{ message: string; interview: Interview }>('/interviews', {
+      method: 'POST',
+      body: data,
+      token,
+    }),
+
+  update: (token: string, id: string, data: Partial<CreateInterviewData> & { outcome?: string; feedback?: string }) =>
+    api<{ message: string; interview: Interview }>(`/interviews/${id}`, {
+      method: 'PATCH',
+      body: data,
+      token,
+    }),
+
+  delete: (token: string, id: string) =>
+    api<{ message: string }>(`/interviews/${id}`, {
+      method: 'DELETE',
+      token,
+    }),
+}
+
+// Reminders API
+export interface CreateReminderData {
+  title: string
+  type?: 'FOLLOW_UP' | 'INTERVIEW_PREP' | 'DEADLINE' | 'GENERAL'
+  dueAt: string
+  applicationId?: string
+}
+
+export const remindersApi = {
+  getAll: (token: string, params?: { applicationId?: string; status?: string; upcoming?: boolean }) => {
+    const searchParams = new URLSearchParams()
+    if (params?.applicationId) searchParams.set('applicationId', params.applicationId)
+    if (params?.status) searchParams.set('status', params.status)
+    if (params?.upcoming) searchParams.set('upcoming', 'true')
+    const query = searchParams.toString()
+    return api<{ reminders: Reminder[] }>(`/reminders${query ? `?${query}` : ''}`, { token })
+  },
+
+  create: (token: string, data: CreateReminderData) =>
+    api<{ message: string; reminder: Reminder }>('/reminders', {
+      method: 'POST',
+      body: data,
+      token,
+    }),
+
+  update: (token: string, id: string, data: Partial<CreateReminderData>) =>
+    api<{ message: string; reminder: Reminder }>(`/reminders/${id}`, {
+      method: 'PATCH',
+      body: data,
+      token,
+    }),
+
+  complete: (token: string, id: string) =>
+    api<{ message: string; reminder: Reminder }>(`/reminders/${id}/complete`, {
+      method: 'POST',
+      token,
+    }),
+
+  dismiss: (token: string, id: string) =>
+    api<{ message: string; reminder: Reminder }>(`/reminders/${id}/dismiss`, {
+      method: 'POST',
+      token,
+    }),
+
+  delete: (token: string, id: string) =>
+    api<{ message: string }>(`/reminders/${id}`, {
+      method: 'DELETE',
+      token,
+    }),
 }
 
 // Notes API
