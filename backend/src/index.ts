@@ -1,7 +1,9 @@
+import 'dotenv/config'
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import { logger } from 'hono/logger'
 import { serve } from '@hono/node-server'
+import auth from './routes/auth.js'
 
 const app = new Hono()
 
@@ -9,7 +11,7 @@ const app = new Hono()
 app.use('*', logger())
 app.use('*', cors({
   origin: 'http://localhost:3000',
-  allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowMethods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowHeaders: ['Content-Type', 'Authorization'],
 }))
 
@@ -25,25 +27,12 @@ api.get('/health', (c) => {
   return c.json({ status: 'ok', timestamp: new Date().toISOString() })
 })
 
-// Example jobs routes
-api.get('/jobs', (c) => {
-  return c.json({
-    jobs: [
-      { id: 1, title: 'Software Engineer', company: 'Tech Corp', status: 'applied' },
-      { id: 2, title: 'Frontend Developer', company: 'Startup Inc', status: 'interview' },
-      { id: 3, title: 'Full Stack Developer', company: 'Big Tech', status: 'offer' },
-    ]
-  })
-})
-
-api.post('/jobs', async (c) => {
-  const body = await c.req.json()
-  return c.json({ message: 'Job created', job: body }, 201)
-})
+// Mount auth routes
+api.route('/auth', auth)
 
 app.route('/api', api)
 
-const port = 3001
+const port = Number(process.env.PORT) || 3001
 console.log(`Server is running on http://localhost:${port}`)
 
 serve({
