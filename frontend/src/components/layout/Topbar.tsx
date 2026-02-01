@@ -1,11 +1,22 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useTheme } from "@/context/ThemeContext";
+import { useAuth } from "@/context/AuthContext";
 
 export default function Topbar() {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const { theme, toggleTheme } = useTheme();
+  const { user, logout } = useAuth();
+
+  const userInitials = user
+    ? `${user.firstName?.charAt(0) || ""}${user.lastName?.charAt(0) || ""}`.toUpperCase() || user.email.charAt(0).toUpperCase()
+    : "?";
+
+  const userName = user
+    ? `${user.firstName || ""} ${user.lastName || ""}`.trim() || user.email
+    : "User";
 
   return (
     <header className="h-16 bg-surface border-b border-border flex items-center justify-between px-6">
@@ -83,7 +94,7 @@ export default function Topbar() {
             className="flex items-center gap-2 p-1.5 rounded-lg hover:bg-accent-light transition-colors"
           >
             <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
-              <span className="text-white text-sm font-medium">JD</span>
+              <span className="text-white text-sm font-medium">{userInitials}</span>
             </div>
             <svg
               className={`w-4 h-4 text-text-muted transition-transform ${isProfileOpen ? "rotate-180" : ""}`}
@@ -99,22 +110,30 @@ export default function Topbar() {
           {isProfileOpen && (
             <div className="absolute right-0 mt-2 w-48 bg-surface border border-border rounded-lg shadow-lg py-1 z-50">
               <div className="px-4 py-2 border-b border-border">
-                <p className="text-sm font-medium text-foreground">John Doe</p>
-                <p className="text-xs text-text-muted">john@example.com</p>
+                <p className="text-sm font-medium text-foreground">{userName}</p>
+                <p className="text-xs text-text-muted">{user?.email}</p>
               </div>
-              <a
+              <Link
                 href="/profile"
+                onClick={() => setIsProfileOpen(false)}
                 className="block px-4 py-2 text-sm text-text-muted hover:bg-accent-light hover:text-foreground"
               >
                 Your Profile
-              </a>
-              <a
+              </Link>
+              <Link
                 href="/settings"
+                onClick={() => setIsProfileOpen(false)}
                 className="block px-4 py-2 text-sm text-text-muted hover:bg-accent-light hover:text-foreground"
               >
                 Settings
-              </a>
-              <button className="w-full text-left px-4 py-2 text-sm text-error hover:bg-error-light">
+              </Link>
+              <button
+                onClick={() => {
+                  setIsProfileOpen(false);
+                  logout();
+                }}
+                className="w-full text-left px-4 py-2 text-sm text-error hover:bg-error-light"
+              >
                 Sign out
               </button>
             </div>

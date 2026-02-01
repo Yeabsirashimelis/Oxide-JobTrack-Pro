@@ -4,6 +4,12 @@ import { cors } from 'hono/cors'
 import { logger } from 'hono/logger'
 import { serve } from '@hono/node-server'
 import auth from './routes/auth.js'
+import companies from './routes/companies.js'
+import applications from './routes/applications.js'
+import interviews from './routes/interviews.js'
+import notes from './routes/notes.js'
+import reminders from './routes/reminders.js'
+import resumes from './routes/resumes.js'
 
 const app = new Hono()
 
@@ -27,8 +33,14 @@ api.get('/health', (c) => {
   return c.json({ status: 'ok', timestamp: new Date().toISOString() })
 })
 
-// Mount auth routes
+// Mount routes
 api.route('/auth', auth)
+api.route('/companies', companies)
+api.route('/applications', applications)
+api.route('/interviews', interviews)
+api.route('/notes', notes)
+api.route('/reminders', reminders)
+api.route('/resumes', resumes)
 
 app.route('/api', api)
 
