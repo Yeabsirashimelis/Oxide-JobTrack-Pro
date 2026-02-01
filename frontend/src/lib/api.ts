@@ -91,3 +91,128 @@ export const authApi = {
       token,
     }),
 }
+
+// Companies API
+export interface Company {
+  id: string
+  name: string
+  industry: string | null
+  size: string | null
+  location: string | null
+  website: string | null
+  description: string | null
+  userId: string
+  createdAt: string
+  updatedAt: string
+  _count?: {
+    applications: number
+    notes: number
+  }
+  applications?: Application[]
+  notes?: Note[]
+}
+
+export interface CreateCompanyData {
+  name: string
+  industry?: string
+  size?: string
+  location?: string
+  website?: string
+  description?: string
+}
+
+export const companiesApi = {
+  getAll: (token: string) =>
+    api<{ companies: Company[] }>('/companies', { token }),
+
+  getById: (token: string, id: string) =>
+    api<{ company: Company }>(`/companies/${id}`, { token }),
+
+  create: (token: string, data: CreateCompanyData) =>
+    api<{ message: string; company: Company }>('/companies', {
+      method: 'POST',
+      body: data,
+      token,
+    }),
+
+  update: (token: string, id: string, data: Partial<CreateCompanyData>) =>
+    api<{ message: string; company: Company }>(`/companies/${id}`, {
+      method: 'PATCH',
+      body: data,
+      token,
+    }),
+
+  delete: (token: string, id: string) =>
+    api<{ message: string }>(`/companies/${id}`, {
+      method: 'DELETE',
+      token,
+    }),
+}
+
+// Applications API
+export interface Application {
+  id: string
+  title: string
+  jobType: string | null
+  workMode: string | null
+  location: string | null
+  salaryMin: number | null
+  salaryMax: number | null
+  source: string | null
+  jobUrl: string | null
+  description: string | null
+  stage: string
+  appliedAt: string | null
+  userId: string
+  companyId: string
+  resumeId: string | null
+  createdAt: string
+  updatedAt: string
+  company?: Company
+  _count?: {
+    interviews: number
+    notes: number
+    reminders: number
+  }
+}
+
+// Notes API
+export interface Note {
+  id: string
+  content: string
+  companyId: string | null
+  applicationId: string | null
+  interviewId: string | null
+  createdAt: string
+  updatedAt: string
+}
+
+export const notesApi = {
+  getAll: (token: string, params?: { companyId?: string; applicationId?: string }) => {
+    const searchParams = new URLSearchParams()
+    if (params?.companyId) searchParams.set('companyId', params.companyId)
+    if (params?.applicationId) searchParams.set('applicationId', params.applicationId)
+    const query = searchParams.toString()
+    return api<{ notes: Note[] }>(`/notes${query ? `?${query}` : ''}`, { token })
+  },
+
+  create: (token: string, data: { content: string; companyId?: string; applicationId?: string; interviewId?: string }) =>
+    api<{ message: string; note: Note }>('/notes', {
+      method: 'POST',
+      body: data,
+      token,
+    }),
+
+  update: (token: string, id: string, content: string) =>
+    api<{ message: string; note: Note }>(`/notes/${id}`, {
+      method: 'PATCH',
+      body: { content },
+      token,
+    }),
+
+  delete: (token: string, id: string) =>
+    api<{ message: string }>(`/notes/${id}`, {
+      method: 'DELETE',
+      token,
+    }),
+}
