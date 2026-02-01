@@ -185,6 +185,38 @@ reminders.post('/:id/complete', async (c) => {
   }
 })
 
+// Mark reminder as pending (uncomplete)
+reminders.post('/:id/uncomplete', async (c) => {
+  try {
+    const { userId } = c.get('user')
+    const { id } = c.req.param()
+
+    // Check ownership
+    const existing = await prisma.reminder.findFirst({
+      where: { id, userId }
+    })
+
+    if (!existing) {
+      return c.json({ error: 'Reminder not found' }, 404)
+    }
+
+    const reminder = await prisma.reminder.update({
+      where: { id },
+      data: { status: 'PENDING' },
+      include: {
+        application: {
+          include: { company: true }
+        }
+      }
+    })
+
+    return c.json({ message: 'Reminder uncompleted', reminder })
+  } catch (error) {
+    console.error('Uncomplete reminder error:', error)
+    return c.json({ error: 'Internal server error' }, 500)
+  }
+})
+
 // Dismiss reminder
 reminders.post('/:id/dismiss', async (c) => {
   try {

@@ -10,6 +10,7 @@ import interviews from './routes/interviews.js'
 import notes from './routes/notes.js'
 import reminders from './routes/reminders.js'
 import resumes from './routes/resumes.js'
+import dashboard from './routes/dashboard.js'
 
 const app = new Hono()
 
@@ -41,6 +42,7 @@ api.route('/interviews', interviews)
 api.route('/notes', notes)
 api.route('/reminders', reminders)
 api.route('/resumes', resumes)
+api.route('/dashboard', dashboard)
 
 app.route('/api', api)
 

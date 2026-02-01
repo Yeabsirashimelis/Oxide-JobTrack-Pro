@@ -125,8 +125,14 @@ export default function ApplicationDetailPage() {
     mutationFn: () => remindersApi.create(token!, { ...newReminder, applicationId }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['application', applicationId] })
+      queryClient.invalidateQueries({ queryKey: ['upcoming'] })
+      queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] })
       setNewReminder({ title: '', dueAt: '', type: 'GENERAL' })
       setIsAddReminderOpen(false)
+    },
+    onError: (error) => {
+      console.error('Failed to add reminder:', error)
+      alert('Failed to add reminder: ' + (error as Error).message)
     },
   })
 
@@ -134,6 +140,24 @@ export default function ApplicationDetailPage() {
     mutationFn: (id: string) => remindersApi.complete(token!, id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['application', applicationId] })
+      queryClient.invalidateQueries({ queryKey: ['upcoming'] })
+    },
+  })
+
+  const uncompleteReminderMutation = useMutation({
+    mutationFn: (id: string) => remindersApi.uncomplete(token!, id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['application', applicationId] })
+      queryClient.invalidateQueries({ queryKey: ['upcoming'] })
+    },
+  })
+
+  const deleteReminderMutation = useMutation({
+    mutationFn: (id: string) => remindersApi.delete(token!, id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['application', applicationId] })
+      queryClient.invalidateQueries({ queryKey: ['upcoming'] })
+      queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] })
     },
   })
 
@@ -436,22 +460,32 @@ export default function ApplicationDetailPage() {
                             <p className="text-text-muted">{interview.mode}</p>
                           </div>
                         </div>
-                        {interview.outcome === 'PENDING' && (
-                          <div className="flex gap-2 mt-3">
+                        <div className="flex gap-2 mt-3">
+                          {interview.outcome !== 'PENDING' && (
+                            <button
+                              onClick={() => updateInterviewMutation.mutate({ id: interview.id, outcome: 'PENDING' })}
+                              className="px-3 py-1 text-xs bg-warning-light text-warning rounded-lg hover:bg-warning/20"
+                            >
+                              Mark Pending
+                            </button>
+                          )}
+                          {interview.outcome !== 'PASSED' && (
                             <button
                               onClick={() => updateInterviewMutation.mutate({ id: interview.id, outcome: 'PASSED' })}
                               className="px-3 py-1 text-xs bg-success-light text-success rounded-lg hover:bg-success/20"
                             >
                               Mark Passed
                             </button>
+                          )}
+                          {interview.outcome !== 'FAILED' && (
                             <button
                               onClick={() => updateInterviewMutation.mutate({ id: interview.id, outcome: 'FAILED' })}
                               className="px-3 py-1 text-xs bg-error-light text-error rounded-lg hover:bg-error/20"
                             >
                               Mark Failed
                             </button>
-                          </div>
-                        )}
+                          )}
+                        </div>
                       </div>
                     )
                   })}
@@ -547,10 +581,10 @@ export default function ApplicationDetailPage() {
                       <button onClick={() => setIsAddReminderOpen(false)} className="px-3 py-1.5 text-sm text-text-muted">Cancel</button>
                       <button
                         onClick={() => addReminderMutation.mutate()}
-                        disabled={!newReminder.title || !newReminder.dueAt}
+                        disabled={!newReminder.title || !newReminder.dueAt || addReminderMutation.isPending}
                         className="px-3 py-1.5 text-sm bg-primary text-white rounded-lg disabled:opacity-50"
                       >
-                        Add
+                        {addReminderMutation.isPending ? 'Adding...' : 'Add'}
                       </button>
                     </div>
                   </div>
@@ -563,8 +597,15 @@ export default function ApplicationDetailPage() {
                     <input
                       type="checkbox"
                       checked={reminder.status === 'COMPLETED'}
-                      onChange={() => reminder.status !== 'COMPLETED' && completeReminderMutation.mutate(reminder.id)}
+                      onChange={() => {
+                        if (reminder.status === 'COMPLETED') {
+                          uncompleteReminderMutation.mutate(reminder.id)
+                        } else {
+                          completeReminderMutation.mutate(reminder.id)
+                        }
+                      }}
                       className="w-4 h-4 rounded border-border"
+                      title={reminder.status === 'COMPLETED' ? 'Mark as pending' : 'Mark as completed'}
                     />
                     <div className="flex-1">
                       <p className={`text-sm ${reminder.status === 'COMPLETED' ? 'line-through text-text-muted' : 'text-foreground'}`}>
@@ -572,6 +613,15 @@ export default function ApplicationDetailPage() {
                       </p>
                       <p className="text-xs text-text-muted">{formatDateTime(reminder.dueAt)}</p>
                     </div>
+                    <button
+                      onClick={() => deleteReminderMutation.mutate(reminder.id)}
+                      className="text-text-muted hover:text-error p-1"
+                      title="Delete reminder"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                    </button>
                   </div>
                 ))}
                 {reminders.length === 0 && !isAddReminderOpen && (

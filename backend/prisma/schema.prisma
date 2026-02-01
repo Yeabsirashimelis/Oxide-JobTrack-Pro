@@ -235,11 +235,13 @@ enum ReminderType {
   INTERVIEW_PREP
   INTERVIEW
   DEADLINE
+  GENERAL
   CUSTOM
 }
 
 enum ReminderStatus {
   PENDING
   COMPLETED
+  DISMISSED
   OVERDUE
 }
