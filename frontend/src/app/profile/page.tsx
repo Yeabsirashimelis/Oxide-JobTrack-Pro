@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { AppLayout } from "@/components/layout"
 import { useAuth } from '@/context/AuthContext'
@@ -9,6 +9,7 @@ import { authApi, User } from '@/lib/api'
 export default function ProfilePage() {
   const { user, token, updateUser } = useAuth()
   const queryClient = useQueryClient()
+  const initializedRef = useRef(false)
 
   const [formData, setFormData] = useState({
     firstName: '',
@@ -25,8 +26,10 @@ export default function ProfilePage() {
 
   const [successMessage, setSuccessMessage] = useState('')
 
+  // Only sync form data on initial load, not on every user update
   useEffect(() => {
-    if (user) {
+    if (user && !initializedRef.current) {
+      initializedRef.current = true
       setFormData({
         firstName: user.firstName || '',
         lastName: user.lastName || '',
