@@ -235,6 +235,7 @@ enum ReminderType {
   INTERVIEW_PREP
   INTERVIEW
   DEADLINE
+  GENERAL
   CUSTOM
 }
 

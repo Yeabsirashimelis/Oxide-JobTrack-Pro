@@ -350,6 +350,12 @@ export const remindersApi = {
       token,
     }),
 
+  uncomplete: (token: string, id: string) =>
+    api<{ message: string; reminder: Reminder }>(`/reminders/${id}/uncomplete`, {
+      method: 'POST',
+      token,
+    }),
+
   dismiss: (token: string, id: string) =>
     api<{ message: string; reminder: Reminder }>(`/reminders/${id}/dismiss`, {
       method: 'POST',
